@@ -1,0 +1,63 @@
+import numpy as np
+from sklearn.metrics.pairwise import cosine_similarity
+
+class MovieRecommendationSystem:
+    def __init__(self):
+        # Example movies and their corresponding genres (encoded as vectors)
+        self.movies = [
+            {'id': 1, 'title': 'The Matrix', 'genres': ['Action', 'Sci-Fi']},
+            {'id': 2, 'title': 'The Godfather', 'genres': ['Crime', 'Drama']},
+            {'id': 3, 'title': 'The Dark Knight', 'genres': ['Action', 'Crime', 'Drama']},
+            {'id': 4, 'title': 'Forrest Gump', 'genres': ['Drama', 'Romance']},
+            {'id': 5, 'title': 'The Shawshank Redemption', 'genres': ['Drama']},
+            {'id': 6, 'title': 'Inception', 'genres': ['Action', 'Sci-Fi', 'Thriller']},
+            {'id': 7, 'title': 'Pulp Fiction', 'genres': ['Crime', 'Drama']},
+            {'id': 8, 'title': 'The Lion King', 'genres': ['Animation', 'Adventure', 'Drama']}
+        ]
+        
+        # Create a unique list of all genres
+        self.all_genres = list(set(genre for movie in self.movies for genre in movie['genres']))
+        
+        # Create a movie-genre matrix (binary: 1 if movie has that genre, 0 otherwise)
+        self.movie_genre_matrix = self.create_movie_genre_matrix()
+
+    def create_movie_genre_matrix(self):
+        """Create a matrix representing whether a movie belongs to a genre."""
+        matrix = np.zeros((len(self.movies), len(self.all_genres)), dtype=int)
+        
+        for i, movie in enumerate(self.movies):
+            for genre in movie['genres']:
+                matrix[i, self.all_genres.index(genre)] = 1
+        return matrix
+
+    def recommend_movies(self, user_genres):
+        """Recommend movies based on user preferences (genres they like)."""
+        # Create the user's genre vector (binary: 1 if user likes the genre, 0 otherwise)
+        user_vector = np.zeros(len(self.all_genres), dtype=int)
+        for genre in user_genres:
+            if genre in self.all_genres:
+                user_vector[self.all_genres.index(genre)] = 1
+        
+        # Calculate the cosine similarity between the user vector and movie genre vectors
+        similarities = cosine_similarity([user_vector], self.movie_genre_matrix)[0]
+        
+        # Sort the movies based on similarity and return the top 5 recommendations
+        sorted_indices = np.argsort(similarities)[::-1]
+        recommendations = [(self.movies[i]['title'], similarities[i]) for i in sorted_indices[:5]]
+        
+        return recommendations
+
+
+# Example Usage:
+if __name__ == "__main__":
+    recommender = MovieRecommendationSystem()
+    
+    # Example user preferences (genres they like)
+    user_preferences = ['Action', 'Sci-Fi']
+    
+    # Get movie recommendations
+    recommendations = recommender.recommend_movies(user_preferences)
+    
+    print("Recommended Movies based on your preferences:")
+    for title, score in recommendations:
+        print(f"{title} (Similarity Score: {score:.2f})")
